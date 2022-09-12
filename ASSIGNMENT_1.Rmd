@@ -1,0 +1,34 @@
+---
+title: "Assignment_1"
+author: "Hannah Cronin"
+date: "2022-09-11"
+output: html_document
+---
+
+# This dataset from Kaggle is about the nutrional facts of various cereals.
+```{r}
+cereal <- read.csv("~/Downloads/cereal.csv") #URL:https://www.kaggle.com/datasets/crawford/80-cereals?resource=download
+```
+
+```{r}
+head(cereal) #first 6 rows of data
+summary(cereal) #means and quartile info of all quantitative variables
+```
+
+```{r}
+tapply(cereal$rating,cereal$mfr,summary) #mean/quartiles of each cereal manufacturer
+```
+
+```{r}
+library(dplyr) #load in dplyr package
+```
+
+```{r}
+mutate(cereal, weight_grams = weight * 28.34952) #transformed weight from ounces into grams
+```
+
+```{r}
+hist(cereal$protein) #one quantitative variable
+plot(cereal$calories,cereal$sugars) #scatter plot of calories/sugars
+```
+

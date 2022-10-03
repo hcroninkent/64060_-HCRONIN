@@ -1,0 +1,124 @@
+---
+title: "Assignment_2"
+author: "Hannah Cronin"
+date: "2022-09-27"
+output: html_document
+---
+```{r}
+UniversalBankOrig <- read.csv("~/Downloads/UniversalBank.csv")
+library(caret)
+library(ISLR)
+library(psych)
+library(class)
+library(dplyr)
+library(FNN)
+```
+ 
+Create Dummy Variables
+```{r}
+UniversalBank = subset(UniversalBankOrig, select = -c(ID, ZIP.Code)) #strip ID, ZIP.Code
+education_dummy = as.data.frame(dummy.code(UniversalBank$Education)) #creates dummy variable
+names(education_dummy) = c('Education_1', 'Education_2', 'Education_3') #renames
+bank = subset(UniversalBank, select = -c(Education)) #strip education from dataset
+UBank = cbind(bank, education_dummy)
+UBank$Personal.Loan = as.factor(UBank$Personal.Loan)
+```
+Partitioning the data
+```{r}
+Train_Index = createDataPartition(UBank$Personal.Loan, p=.6, list = FALSE)
+train.df = UBank[Train_Index,]
+valid.df = UBank[-Train_Index,]
+new.df = data.frame(Age=40, Experience=10, Income=84, Family=2, CCAvg=2, Education_1=0, Education_2=1, Education_3=0, Mortgage=0, Securities.Account=0, CD.Account=0, Online=1, CreditCard=1) #new customer info
+```
+Compare partitions
+```{r}
+summary(train.df$Personal.Loan)
+summary(valid.df$Personal.Loan)
+```
+Data Normalization
+```{r}
+train.norm.df = train.df
+valid.norm.df = valid.df
+new.norm.df = new.df
+Ubank.norm.df = UBank
+
+norm.values = preProcess(train.df[,-7], method=c('scale','center'))
+train.norm.df[, -7] = predict(norm.values, train.df[,-7])
+valid.norm.df[, -7] = predict(norm.values, valid.df[,-7])
+new.norm.df <- predict(norm.values, new.df)
+Ubank.norm.df[,-7] <- predict(norm.values,UBank[,-7])
+```
+
+```{r}
+nn = knn(train = train.norm.df[,-7], test = valid.norm.df[,-7], 
+          cl = train.norm.df[,7], k = 1, prob=TRUE) 
+head(nn)
+# This customer would be classified as a loan denial (0)
+```
+
+```{r}
+accuracy.df <- data.frame(k = seq(1, 20, 1), accuracy = rep(0,20))
+
+for(i in 1:20) {
+  knn.pred <- knn(train.norm.df[, -7], valid.norm.df[, -7], 
+                  cl = train.norm.df[, 7], k = i)
+  accuracy.df[i, 2] <- confusionMatrix(knn.pred, valid.norm.df[, 7])$overall[1] 
+}
+accuracy.df
+# K = 3 is the best option
+```
+
+```{r}
+cm <- knn(train = train.df[,-7],test = valid.df[,-7], cl = train.df[,7], k=3, prob=TRUE)
+confusionMatrix(cm, valid.df[,7])
+#Confusion Matrix
+```
+
+```{r}
+
+knn.2 <- knn(train = train.df[,-7],test = new.df, cl = train.df[,7], k=3, prob=TRUE)
+knn.2
+# Customer is classified as 0
+```
+Create Partions
+```{r}
+Train_Index2 = createDataPartition(UBank$Personal.Loan, p=.5, list = FALSE)
+training_index = UBank[Train_Index2,]
+Bank_Data_Index = UBank[-Train_Index2,]
+```
+```{r}
+testvalid_index = createDataPartition(Bank_Data_Index$Personal.Loan, p = .6, list = FALSE)
+validation_index = Bank_Data_Index[testvalid_index,]
+test_index = Bank_Data_Index[-testvalid_index,]
+```
+Normalize Data
+```{r}
+train.norm_index = training_index
+valid.norm_index = validation_index
+test.norm_index = test_index
+
+norm.values = preProcess(training_index[,-7], method=c('scale','center'))
+train.norm_index[, -7] = predict(norm.values, training_index[,-7])
+valid.norm_index[, -7] = predict(norm.values, validation_index[,-7])
+test.norm_index[, -7] = predict(norm.values, test_index[,-7])
+```
+knn
+```{r}
+testingknn <- knn(train = training_index[,-7],test = test_index[,-7], cl = training_index[,7], k=3, prob=TRUE)
+validationknn <- knn(train = training_index[,-7],test = validation_index[,-7], cl = training_index[,7], k=3, prob=TRUE)
+trainknn <- knn(train = training_index[,-7],test = training_index[,-7], cl = training_index[,7], k=3, prob=TRUE)
+```
+Confusion matrix - test
+```{r}
+confusionMatrix(testingknn, test_index[,7])
+```
+Confusion matrix -  validation
+```{r}
+confusionMatrix(validationknn, validation_index[,7])
+```
+Confusion matrix - training
+```{r}
+confusionMatrix(trainknn, training_index[,7])
+```
+
+The testknn has the highest accuracy, then the trainknn, and lastly the validationknn.  The fact that  validationknn isn't as high as the trainknn means the model is not overfitting. Lastly, the trainingknn has an accuracy of .9464, which looks good  as it suggests the model isn't over/underfitting and is  producing  accurate predicted results.

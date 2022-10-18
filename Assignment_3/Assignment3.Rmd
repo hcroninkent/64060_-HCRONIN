@@ -1,0 +1,98 @@
+---
+title: "assign3"
+author: "Hannah Cronin"
+date: "2022-10-17"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+library(caret)
+library(ISLR)
+library(e1071)
+library(readr)
+library(ggplot2)
+library(lattice)
+library(reshape)
+library(reshape2)
+UniversalBank <- read_csv("Desktop/GITHUB/64060_-HCRONIN-FML/UniversalBank.csv")
+```
+
+```{r}
+loan = UniversalBank[,-c(1,2,3,4,5,6,7,8,9,11,12)] #more narrowed dataset
+colnames(loan)[1] = 'Personal_Loan'
+```
+
+```{r}
+Index_Train = createDataPartition(loan$`Personal_Loan`, p = .6, list=FALSE)
+Train = loan[Index_Train,]
+Valid = loan[-Index_Train,]
+```
+
+A.
+```{r}
+pivot = melt(Train, id = c('CreditCard','Personal_Loan'), variable = 'Online')
+cast.loan = cast(pivot, CreditCard+Personal_Loan~Online)
+cast.loan[, c(1:3)]
+```
+B.
+```{r}
+prob = 87 / (1919+206+788+87)
+prob * 100
+# The probability that this customer will accept a loan is 2.90%.
+```
+
+C.
+```{r}
+pivot2 = melt(Train, id = c('Personal_Loan'), variable = 'Online')
+```
+```{r}
+cast.loan2 = cast(pivot2, Personal_Loan~Online)
+cast.loan2[,c(1:2)]
+```
+
+```{r}
+pivot3 = melt(Train, id = c('Personal_Loan'), variable = 'CreditCard')
+```
+```{r}
+cast.loan3 = cast(pivot3, Personal_Loan~CreditCard)
+cast.loan3[,c(1,3)]
+```
+# I can't get the pivot tables above to display the correct answer - they seem to be defaulted to the number of people who accepted the loan regardless of the other variable we're looking at. (293 & 2707)
+# I'm going to use regular tables instead so at least I can compute the right answers for D.
+```{r}
+table(Train[,c(1,2)])
+table(Train[,c(1,3)])
+```
+
+D.
+```{r}
+# 1. 29.693%
+((87)/(206+87))
+# 2. 60.751%
+(178/(115+178))
+# 3. 9.767%
+(293/3000)
+# 4. 29.110 %
+(788/(788+1919))
+# 5. 59.660
+(1615/(1615+1092))
+# 6. 90.233%
+((3000-293)/3000)
+```
+
+E.
+```{r}
+((87/(206+87))*(178/(178+115))*(293/(293+2707)))/(((77/(77+198))*(178/(178+115))*(293/(293+2707)))+((788/(788+1919))*(1615/(1615+1092))*2707/(2707+293)))
+```
+F.
+10.16% and 10.73% are very similar. Since Naive assumes independence of the variables- it's a more accurate estimate.
+
+G.
+```{r}
+nb_model <-naiveBayes(Personal_Loan~CreditCard+Online,data = Train)
+nb_model
+(.458)*(.489)*(.10)/((.458*.489*.098)+(.454*.491*.90))
+```
+This number is very close to the one found in E.

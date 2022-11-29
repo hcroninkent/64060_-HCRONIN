@@ -16,8 +16,8 @@ library(dplyr)
 ```
 # To get rid of any rows with Nulls/NAs
 ```{r}
-df = scale(Cereal[4:16])
-df = as.data.frame(df)
+df = scale(Cereal[4:16]) #to normalize data
+df = as.data.frame(df) #to make the data a data frame(so it can be partitioned later)
 ```
 ```{r}
 d = dist(df, method = 'euclidean')
@@ -26,8 +26,7 @@ hc_complete = agnes(df, method = 'complete', metric = 'euclidean')
 hc_average = agnes(df, method = 'average', metric = 'euclidean')
 hc_ward = agnes(df, method = 'ward', metric = 'euclidean')
 ```
-# I tried to use C for the above work as well, but the Dendogram had a height approaching 600 so I ommitted # the categorical variables. 
-# Also the focus of this is on nutritional value, so the categorical variables did not hold much value.
+# The categorical variables are ommitted as they do not hold much value as this project focuses on nutritional value.
 ```{r}
 print(hc_single$ac)
 print(hc_complete$ac)
@@ -54,9 +53,9 @@ rect.hclust(hc_ward_d, k = 5, border = 1:5)
 
 
 ```{r}
-cut = cutree(hc_ward, k = 5)
-cut
-clusters <- fviz_cluster(list(data = df, cluster = cut))
+cut = cutree(hc_ward, k = 5) 
+cut #the composite of each cluster
+clusters <- fviz_cluster(list(data = df, cluster = cut)) #visualization of the clusters
 clusters
 ```
 # To partition data to check stability
@@ -81,7 +80,7 @@ plot_2 <- pltree(clust_2, cex = 0.6, hang = -1)
 ```
 # The partitioned clusters look very similar and their agglomerative coefficients values are almost identical.
 
-# To look at unscaled clusters
+# To look at unscaled clusters for healthy cereals in schools
 ```{r}
 c = kmeans(Cereal[4:12], centers = 5, nstart = 50)
 Cereal = data.frame(Cereal, c$cluster)

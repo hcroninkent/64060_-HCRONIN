@@ -1,0 +1,83 @@
+---
+title: "assignment_5"
+author: "Hannah Cronin"
+date: "2022-11-29"
+output: html_document
+---
+```{r}
+library(readr)
+Cereals <- read_csv("/Users/hannahcronin/Desktop/GITHUB/64060_-HCRONIN-FML/Assignment_5/Cereals.csv")
+Cereal <- na.omit(Cereals)
+head(Cereal)
+library(cluster)
+library(factoextra)
+library(caret)
+library(dplyr)
+```
+# To get rid of any rows with Nulls/NAs
+```{r}
+df = scale(Cereal[4:16]) #to trim categorical variables (non-nutrional)
+head(df)
+df = as.data.frame(df)
+df
+```
+```{r}
+d = dist(df, method = 'euclidean')
+hc_single = agnes(df, method = 'single')
+hc_complete = agnes(df, method = 'complete')
+hc_average = agnes(df, method = 'average')
+hc_ward = agnes(df, method = 'ward')
+```
+# I tried to use C for the above work as well, but the Dendogram had a height approaching 600 so I ommitted # the categorical variables. 
+# Also the focus of this is on nutritional value, so the categorical variables did not hold much value.
+```{r}
+print(hc_single$ac)
+print(hc_complete$ac)
+print(hc_average$ac)
+print(hc_ward$ac)
+```
+# The Ward method is preferred as it provides the strongest clustering structure.
+
+```{r}
+tree = pltree(hc_ward, cex = .6, hang = -1, main = 'Dendogram of agnes')
+```
+
+```{r}
+pltree(hc_ward, cex = 0.6)
+rect.hclust(hc_ward, k = 5, border = 1:5)
+```
+# The height I've chosen is 4- which results in 5 clusters based on Euclidean distance.I tried to build this same graph using the Agnes function however the height was always 5 or sub-5 which I didn't not believe to be an accurate distance.
+
+
+```{r}
+cut = cutree(hc_ward, k = 5)
+cut
+clusters <- fviz_cluster(list(data = df, cluster = cut))
+clusters
+```
+# To partition data to check stability
+```{r}
+mod = kmeans(df, centers = 5, nstart = 50)
+mod$betweenss / mod$totss 
+```
+# About 52.5% of data stays within initial cluster
+
+```{r}
+#cer = createDataPartition(df$calories, p = .5) #I can't get this code chunk to work
+#part1 = df[cer,]
+#part2 = df[-cer,]
+# I wanted to do more data partitioning, but I can't seem to figure it out
+```
+```{r}
+#cere = createDataPartition(Cereal$calories, p = .5) #I also tried this could chunk and could not get it to work. I was thinking of using the data before it was normalized and then normalize it after words, but it does not seem to like it.
+#parta = Cereal[cere,]
+#partb = Cereal[-cere,]
+```
+```{r}
+c = kmeans(Cereal[4:12], centers = 5, nstart = 50)
+Cereal = data.frame(Cereal, c$cluster)
+c$center
+```
+Here we do not want to use standardized data, because the nutrional value is important to see on its own. For example, the ratio between carbohydrates and fiber (simple sugar vs complex sugars). Each factor becomes imporant to know rather than the scaled version. Based on these results, I'd recommend Cereal#1, because it has the fewest calories, a moderate amount of protein, a lower amount of fat, low sodium, higher fiber, moderate amount of carbs, low sugar, some potassium, and vitamins.
+
+

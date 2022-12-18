@@ -1,0 +1,70 @@
+---
+title: "final"
+author: "Hannah Cronin"
+date: "2022-12-18"
+output: html_document
+---
+```{r}
+library(readr)
+library(tidyverse)
+library(factoextra)
+library(ISLR)
+library(cluster)
+diabetes <- read_csv("/Users/hannahcronin/Desktop/diabetes_data.csv")
+```
+
+```{r}
+set.seed(123)
+summary(diabetes) #summary of the 18 variables
+data = sample_n(diabetes, 500) #Limited down the dataset for better performance
+summary(data)
+```
+
+```{r}
+df = scale(data)
+distance = get_dist(df)
+fviz_dist(distance)
+summary(df)
+```
+
+```{r}
+fviz_nbclust(df, kmeans, method = "silhouette")
+```
+
+```{r}
+km = kmeans(df, 3, nstart = 25)
+km$cluster
+```
+```{r}
+plot(c(0), xaxt = 'n', ylab = "", type = "l", 
+     ylim = c(min(km$centers), max(km$centers)), xlim = c(0, 18))
+axis(1, at = c(1:18), labels = names(df), cex.axis=.5)
+for (i in c(1:3))
+lines(km$centers[i,], lty = i, lwd = 2, col = ifelse(i %in% c(1, 3, 5),
+                            "dark green", "pink"))
+text(x = 0.2, y = km$centers[, 1], labels = paste("Cluster", c(1:3)))
+
+```
+
+```{r}
+km$centers #numerical descriptions of each cluster
+km$withinss #numerical descriptions of each cluster
+km$size #numerical descriptions of each cluster
+```
+# Cluster 3 is the most homogenous and is also the second largest.
+
+# Cluster 2 younger, contains more females, lower cholesterol, does not get their cholesterol checked as frequently, has a lower BMI, less smokers, less history of Heart disease/attacks, more active, eats less fruits, eats more veggies, drinks more, better general health, less mental/physical illness/injury days, less difficulty walking, less stroke, lower blood pressure, and less diabetes. 
+# Alias for Cluster Tw0 is Tend to be Young/In Better Health
+
+# Cluster 3 is older, contains more men, has higher cholesterol, tends to get their cholesterol checked, a mid-range BMI, some smokers, lesser history of heart dieases/attack, more physical days, eats more fruits, eats less veggies, tends to drink in heavier amounts, general health is average, has some poor mental health days, has some injury/illness days, has less difficulty walking, has some strokes, has high blood pressure, and some diabetes.
+# Alias for Cluster Three is Tend to be Older/In Moderate Health
+
+# Cluster 1 is middle aged (between the other clusters), contains more females, has higher cholesterol, tends to get their cholesterol checked, has the highest BMI, has more smokers, has history of heart disease/attack, less physical activity, eats less fruit, eats less veggies, tend not to be heavy drinkers, poorer general health, more mental/physical illness/injury days, has more difficulty walking, has more history of strokes, has some high blood pressure, and has the most diabetes.
+# Alias for Cluster One is Tend to be Middle-Aged/Poorer Health 
+
+```{r}
+fviz_cluster(km, data = df)
+```
+# Clusters 2 and 3 have a lot of overlap and share a lot of similarities, Cluster 1 has a little overlap but is more separate.
+
+
